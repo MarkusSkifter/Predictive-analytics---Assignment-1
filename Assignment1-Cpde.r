@@ -7,18 +7,20 @@
 
 ######## Question 1 #########
 
+# loader data"
 data("USMacroG", package = "AER")
 
+#definerer df
 df <- USMacroG
 
-plot(df[,"gdp"],
-     main = "Real GDP (US, 1950–2000)",
-     ylab = "GDP (Billion USD)",
-     xlab = "Time")
+# because ggplot can not take the values if they are not numeric, we convert them to numeric from the timeseries format it otherwise is.
+gdp_df <- data.frame(
+  time = as.numeric(time(df)),
+  gdp  = as.numeric(df[,"gdp"])
+)
 
-acf(USMacroG[,"gdp"],
-    lag.max = 40,
-    col = "blue",
-    lwd = 2,
-    main = "Autocorrelation Function of Real GDP")
+# we plot gdp
+ggplot(gdp_df, aes(x = time, y = gdp)) + geom_line()
 
+# we plot the acf function
+ggAcf(gdp_df["gdp"], lag.max = 100)
