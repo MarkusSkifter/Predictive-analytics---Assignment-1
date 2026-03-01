@@ -73,14 +73,6 @@ ggsubseriesplot(gdp_gr_ts) +
 Box.test(gdp_gr_ts, lag = 8,  type = "Ljung-Box")
 Box.test(gdp_gr_ts, lag = 12, type = "Ljung-Box")
 
-# (b) Durbin-Watson on a mean-only model (tests AR(1)-type autocorrelation)
-m0 <- lm(gdp_gr_ts ~ 1)
-dwtest(m0)
-
-# (c) Breusch-Godfrey test (more general, tests up to order p)
-# Here with p = 4 (one year of quarterly lags) and p = 8 as alternative
-bgtest(m0, order = 4)
-bgtest(m0, order = 8)
-
 # (Optional but often helpful) Stationarity check on growth rates
 adf.test(gdp_gr_ts)
+
