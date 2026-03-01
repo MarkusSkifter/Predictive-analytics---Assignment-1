@@ -1,78 +1,58 @@
-# --- Packages ---
+######## Question 2 #########
+# load required packages
 library(AER)
 library(ggplot2)
-library(forecast)   # ggAcf
-library(lmtest)     # dwtest, Box.test
-library(tseries)    # adf.test (valgfrit men ofte nyttigt)
+library(forecast)   # ggAcf, ggPacf, ggseasonplot, ggsubseriesplot
+library(tseries)    # adf.test (optional)
 
-# --- Load data ---
+# load data
 data("USMacroG", package = "AER")
+
+# define dataframe
 df <- USMacroG
 
-# GDP as a ts object
+# extract GDP (time series object)
 gdp_ts <- df[, "gdp"]
 
-# =========================================================
-# 1) Create QoQ growth rate series for GDP
-# =========================================================
-# Option A (recommended): log-growth (approx. percent growth)
-gdp_gr_ts <- 100 * diff(log(gdp_ts))   # QoQ growth in %
+# ---------- 2.1: Create QoQ growth rate (log-difference) ----------
+# Quarter-on-quarter growth in percent:
+# 100 * (log(y_t) - log(y_{t-1}))
+gdp_growth_ts <- 100 * diff(log(gdp_ts))
 
-# Option B: simple percent change (if you prefer exact %)
-# gdp_gr_ts <- 100 * (gdp_ts / stats::lag(gdp_ts, -1) - 1)
-# gdp_gr_ts <- na.omit(gdp_gr_ts)
-
-# Make a data frame for ggplot
-gdp_gr_df <- data.frame(
-  time   = as.numeric(time(gdp_gr_ts)),
-  gdp_gr = as.numeric(gdp_gr_ts)
+# create dataframe for ggplot
+gdp_growth_df <- data.frame(
+  time   = as.numeric(time(gdp_growth_ts)),
+  growth = as.numeric(gdp_growth_ts)
 )
 
-# =========================================================
-# 2) Plot growth series + ACF, and comment on trend
-# =========================================================
-# Plot growth series
-ggplot(gdp_gr_df, aes(x = time, y = gdp_gr)) +
+# ---------- 2.2: Plot growth series and ACF ----------
+# plot growth series
+ggplot(gdp_growth_df, aes(x = time, y = growth)) +
   geom_line() +
   labs(
-    title = "US GDP QoQ growth (log-diff, %)",
+    title = "US GDP QoQ growth (log-difference, %)",
     x = "Year",
     y = "Growth rate (%)"
   )
 
-# ACF of growth series
-ggAcf(gdp_gr_ts, lag.max = 100) +
+# plot ACF
+ggAcf(gdp_growth_ts, lag.max = 100) +
   labs(title = "ACF: US GDP QoQ growth")
 
-# (Optional) Also show PACF if you want
-ggPacf(gdp_gr_ts, lag.max = 100) + labs(title = "PACF: US GDP QoQ growth")
+# (optional) plot PACF if needed
+# ggPacf(gdp_growth_ts, lag.max = 100) +
+#   labs(title = "PACF: US GDP QoQ growth")
 
-# =========================================================
-# 3) Seasonality / cycle checks
-# =========================================================
-# With quarterly data, seasonality often shows up at lags 4, 8, 12, ...
-# You can inspect ACF peaks at multiples of 4 (already in ACF plot),
-# and also do a simple seasonal plot:
-
-# Convert to ts explicitly (freq should already be 4, but just to be safe)
-gdp_gr_ts <- ts(gdp_gr_ts, start = start(gdp_ts) + c(0,1), frequency = 4)
-
-# Seasonal plot (quarter-of-year patterns)
-ggseasonplot(gdp_gr_ts, year.labels = TRUE) +
+# ---------- 2.3: Check for seasonality and cycles ----------
+# seasonal plot (quarterly data)
+ggseasonplot(gdp_growth_ts, year.labels = TRUE) +
   labs(title = "Seasonal plot: US GDP QoQ growth")
 
-# Another quick view: subseries plot
-ggsubseriesplot(gdp_gr_ts) +
+# subseries plot
+ggsubseriesplot(gdp_growth_ts) +
   labs(title = "Subseries plot: US GDP QoQ growth")
 
-# =========================================================
-# 4) Statistical test for autocorrelation
-# =========================================================
-# (a) Ljung-Box test (common for autocorrelation in a series)
-# Test up to lag 8 or 12 (quarterly: 8 or 12 is typical)
-Box.test(gdp_gr_ts, lag = 8,  type = "Ljung-Box")
-Box.test(gdp_gr_ts, lag = 12, type = "Ljung-Box")
-
-# (Optional but often helpful) Stationarity check on growth rates
-adf.test(gdp_gr_ts)
-
+# ---------- 2.4: Portmanteau test for autocorrelation ----------
+# Ljung-Box test for the first lags (8 or 12 typical for quarterly data)
+Box.test(gdp_growth_ts, lag = 8,  type = "Ljung-Box")
+Box.test(gdp_growth_ts, lag = 12, type = "Ljung-Box")
